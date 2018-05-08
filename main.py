@@ -71,16 +71,26 @@ def open_photal_file(fpath):
     plotData = [[a.wavelength,a.rmeasured] for a in fdata]
     return PlotData(names,plotData)
 
+class PlotDatum:
+    def __init__(self,name,data,status,label):
+        self.name   = name
+        self.data   = data
+        self.status = status
+        self.label  = label
+
 class PlotData:
     def __init__(self,names,data):
         status = [True for d in data]
+        #self.plotData = [PlotDatum(*a) for a in zip(names,data,status,names)]
         self.plotData = [list(a) for a in zip(names,data,status,names)]
 
     def getNames(self):
         return zip(*self.plotData)[0]
+        #return [d.name for d in self.plotData]
 
     def getData(self):
         return zip(*self.plotData)[1]
+        #return [d.data for d in self.plotData]
         
 class CanvasPanel(wx.Panel):
     def __init__(self, parent):
@@ -156,90 +166,97 @@ class MyFrame(wx.Frame):
         self.legend_cur_loc = legend_positions[0]
         self.labels = []
         self.names = []
+        
 
         main_sizer    = wx.BoxSizer(wx.HORIZONTAL)
-        left_sizer    = wx.BoxSizer(wx.VERTICAL)
-        middle_sizer  = wx.BoxSizer(wx.VERTICAL)
-        control_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        right_sizer   = wx.BoxSizer(wx.VERTICAL)
-        self.sample_selector_sizer = wx.BoxSizer(wx.VERTICAL)
-        select_button_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+        self.CreateBrowsePanel(main_sizer)
+        self.CreatePlotPanel(main_sizer)
+        self.CreateSamplePanel(main_sizer)
 
         self.checkboxes = []
         
-        filectrl_panel = wx.Panel(self, -1)
-        canvas_panel = wx.Panel(self, -1)
-        right_panel = wx.Panel(self,-1)
-        select_button_panel = wx.Panel(right_panel,-1)
-        self.samples_select_panel = wx.ScrolledWindow(right_panel, -1)
-        self.samples_select_panel.SetScrollbars(20,20,50,50)
-        button_panel = wx.Panel(canvas_panel,-1)
-        self.filectrl = wx.FileCtrl(filectrl_panel,wx.ID_ANY,'.')
-        load_button_panel = wx.Panel(filectrl_panel,-1)
-        self.canvas = CanvasPanel(canvas_panel)
-        
-        self.btn_load_file   = wx.Button(load_button_panel,-1,"Load File")
-        self.btn_save_plot   = wx.Button(button_panel,-1,"Export Image")
-        self.btn_save_csv    = wx.Button(button_panel,-1,"Export CSV")
-        self.legend_chk      = wx.CheckBox(button_panel,-1,"Legend")
-        self.btn_edit_label  = wx.Button(button_panel,-1,"Edit Labels")
-        self.legend_pos_text = wx.StaticText(button_panel,-1,"Location: ",style=wx.ALIGN_RIGHT)
-        self.legend_pos      = wx.Choice(button_panel,-1,choices=legend_positions)
-        self.legend_pos.SetSelection(0)
-
-
-        #-- Sample Select Panel --#
-        self.btn_select_all = wx.Button(select_button_panel,-1,"Select All")
-        self.btn_select_none = wx.Button(select_button_panel,-1,"Select None")
-        
-        test_btn1 = wx.CheckBox(self.samples_select_panel,-1,'Test Button')
-        test_btn2 = wx.CheckBox(self.samples_select_panel,-1,'Test Button2')
-
-        
-        self.doBinds()
-        
-
-        left_sizer.Add(self.filectrl,9,wx.EXPAND)
-        left_sizer.Add(load_button_panel,1,wx.EXPAND)
-        main_sizer.Add(filectrl_panel, 2, wx.EXPAND)
-        main_sizer.Add(canvas_panel, 3, wx.EXPAND | wx.ALL)
-        main_sizer.Add(right_panel,1,wx.EXPAND)
-        middle_sizer.Add(self.canvas,6,wx.EXPAND)
-        middle_sizer.Add(button_panel,1,wx.EXPAND)
-        control_sizer.Add(self.legend_chk,1)
-        control_sizer.Add(self.btn_edit_label,1)
-        control_sizer.Add(self.legend_pos_text,1,wx.ALIGN_RIGHT)
-        control_sizer.Add(self.legend_pos,1,wx.ALIGN_LEFT)
-        control_sizer.Add(self.btn_save_plot,1)
-        control_sizer.Add(self.btn_save_csv,1)
-        right_sizer.Add(select_button_panel,0,wx.EXPAND)
-        right_sizer.Add(self.samples_select_panel,1,wx.EXPAND)
-        select_button_sizer.Add(self.btn_select_all,0)
-        select_button_sizer.Add(self.btn_select_none,0)
-        self.sample_selector_sizer.Add(test_btn1,0)
-        self.sample_selector_sizer.Add(test_btn2,0)
-
-        
-        button_panel.SetSizer(control_sizer)
-        filectrl_panel.SetSizer(left_sizer)
-        canvas_panel.SetSizer(middle_sizer)
-        right_panel.SetSizer(right_sizer)
-        select_button_panel.SetSizer(select_button_sizer)
-        self.samples_select_panel.SetSizer(self.sample_selector_sizer)
         self.SetSizer(main_sizer)
         self.Centre()
         
-    def doBinds(self):
+    def CreateBrowsePanel(self,main_sizer):
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        panel = wx.Panel(self,-1)
+        self.filectrl = wx.FileCtrl(panel,wx.ID_ANY,'.')
+        load_button_panel = wx.Panel(panel,-1)
+        btn_load_file   = wx.Button(load_button_panel,-1,"Load File")
+        
+        
+        sizer.Add(self.filectrl,9,wx.EXPAND)
+        sizer.Add(load_button_panel,1,wx.EXPAND)
+        
+        panel.SetSizer(sizer)
+        main_sizer.Add(panel, 2, wx.EXPAND)
+        
         self.filectrl.Bind(wx.EVT_FILECTRL_FILEACTIVATED,self.LoadFile)
-        self.btn_load_file.Bind(wx.EVT_BUTTON, self.LoadFile)
-        self.btn_save_plot.Bind(wx.EVT_BUTTON, self.SavePlot)
-        self.btn_save_csv.Bind(wx.EVT_BUTTON, self.SaveCSV)
-        self.btn_select_all.Bind(wx.EVT_BUTTON, self.select_all)
-        self.btn_select_none.Bind(wx.EVT_BUTTON, self.select_none)
-        self.legend_chk.Bind(wx.EVT_CHECKBOX, self.toggleLegend)
+        btn_load_file.Bind(wx.EVT_BUTTON, self.LoadFile)
+        
+    def CreatePlotPanel(self,main_sizer):
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        control_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        panel = wx.Panel(self,-1)
+        button_panel = wx.Panel(panel,-1)
+        self.canvas = CanvasPanel(panel)
+        
+        btn_save_plot   = wx.Button(button_panel,-1,"Export Image")
+        btn_save_csv    = wx.Button(button_panel,-1,"Export CSV")
+        legend_chk      = wx.CheckBox(button_panel,-1,"Legend")
+        btn_edit_label  = wx.Button(button_panel,-1,"Edit Labels")
+        legend_pos_text = wx.StaticText(button_panel,-1,"Location: ",style=wx.ALIGN_RIGHT)
+        self.legend_pos      = wx.Choice(button_panel,-1,choices=legend_positions)
+        self.legend_pos.SetSelection(0)
+        
+        btn_save_plot.Bind(wx.EVT_BUTTON, self.SavePlot)
+        btn_save_csv.Bind(wx.EVT_BUTTON, self.SaveCSV)
+        legend_chk.Bind(wx.EVT_CHECKBOX, self.toggleLegend)
         self.legend_pos.Bind(wx.EVT_CHOICE, self.set_legend_position)
-        self.btn_edit_label.Bind(wx.EVT_BUTTON, self.open_label_dialog)
-        return
+        btn_edit_label.Bind(wx.EVT_BUTTON, self.open_label_dialog)
+        
+        main_sizer.Add(panel, 3, wx.EXPAND | wx.ALL)
+        sizer.Add(self.canvas,6,wx.EXPAND)
+        sizer.Add(button_panel,1,wx.EXPAND)
+        
+        control_sizer.Add(legend_chk,1)
+        control_sizer.Add(btn_edit_label,1)
+        control_sizer.Add(legend_pos_text,1,wx.ALIGN_RIGHT)
+        control_sizer.Add(self.legend_pos,1,wx.ALIGN_LEFT)
+        control_sizer.Add(btn_save_plot,1)
+        control_sizer.Add(btn_save_csv,1)
+        
+        button_panel.SetSizer(control_sizer)
+        panel.SetSizer(sizer)
+        
+    def CreateSamplePanel(self,main_sizer):
+        sizer   = wx.BoxSizer(wx.VERTICAL)
+        sample_selector_sizer = wx.BoxSizer(wx.VERTICAL)
+        select_button_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        
+        panel = wx.Panel(self,-1)
+        select_button_panel = wx.Panel(panel,-1)
+        self.samples_select_panel = wx.ScrolledWindow(panel, -1)
+        self.samples_select_panel.SetScrollbars(20,20,50,50)
+        
+        btn_select_all = wx.Button(select_button_panel,-1,"Select All")
+        btn_select_none = wx.Button(select_button_panel,-1,"Select None")
+        
+        btn_select_all.Bind(wx.EVT_BUTTON, self.select_all)
+        btn_select_none.Bind(wx.EVT_BUTTON, self.select_none)
+        
+        main_sizer.Add(panel,1,wx.EXPAND)
+        sizer.Add(select_button_panel,0,wx.EXPAND)
+        sizer.Add(self.samples_select_panel,1,wx.EXPAND)
+        select_button_sizer.Add(btn_select_all,0)
+        select_button_sizer.Add(btn_select_none,0)
+        
+        panel.SetSizer(sizer)
+        select_button_panel.SetSizer(select_button_sizer)
+        self.samples_select_panel.SetSizer(sample_selector_sizer)
+        
 
     def set_legend_position(self,event):
         self.legend_cur_loc = self.legend_pos.GetSelection()
@@ -334,16 +351,16 @@ class MyFrame(wx.Frame):
         self.plot()
         
         self.samples_select_panel.DestroyChildren()
-        self.sample_selector_sizer = wx.BoxSizer(wx.VERTICAL)
+        sample_selector_sizer = wx.BoxSizer(wx.VERTICAL)
         self.checkboxes = []
 
         for n,d in enumerate(self.plotData.plotData):
             chkbox = wx.CheckBox(self.samples_select_panel,-1,d[0])
             self.checkboxes.append(chkbox)
-            self.sample_selector_sizer.Add(chkbox,0)
+            sample_selector_sizer.Add(chkbox,0)
             chkbox.SetValue(True)
             chkbox.Bind(wx.EVT_CHECKBOX,self.choose_sample)
-        self.samples_select_panel.SetSizer(self.sample_selector_sizer)
+        self.samples_select_panel.SetSizer(sample_selector_sizer)
         self.Layout()
             
         
@@ -370,7 +387,7 @@ class MyFrame(wx.Frame):
         for s in savedata:
             name  = s[0]
             names = ["Wavelength: {:s}".format(name),name]
-            data  = d[1]
+            data  = s[1]
             df1   = pd.DataFrame({names[0]:data[0], names[1]:data[1]})
             df  = pd.concat([df, df1], ignore_index=True,axis=1)
 
