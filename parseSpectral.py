@@ -179,7 +179,7 @@ def dataNames(text):
             listno = lines[0]
             if line.startswith('Sample name,'):
                 name = line.split(',')[1]
-                names.append((name+"(ListNo.{:s})".format(listno)).translate(None,'\r'))
+                names.append((name+"(ListNo.{:s})".format(listno)).replace('\r',''))
     return names
     
 def genSpecData(text):
@@ -195,7 +195,7 @@ def genSpecData(text):
     
 class SpectralData:
     def __init__(self,data,name=""):
-        tdata = zip(*data[1:-2])
+        tdata = list(zip(*data[1:-2]))
         self.wavelength = tdata[0]
         self.rmeasured = tdata[1]
         self.rreferenceDark = tdata[2]

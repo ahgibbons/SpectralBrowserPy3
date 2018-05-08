@@ -16,6 +16,8 @@ from wx.lib.mixins.listctrl import TextEditMixin
 CANVAS_WIDTH = 300
 CANVAS_HEIGHT = 300
 
+MAX_INT = 1000000
+
 COMPARE_FILE = 1
 PHOTAL_FILE = 2
 INVALID_FILE = 0
@@ -91,10 +93,6 @@ class CanvasPanel(wx.Panel):
         self.SetSizer(self.sizer)
         self.Fit()
 
-    def draw(self):
-        t = arange(0.0, 3.0, 0.01)
-        s = sin(2 * pi * t)
-        self.axes.plot(t, s)
 
 class LabelDialog(wx.Dialog):
     def __init__(self,parent,id,title):
@@ -112,7 +110,7 @@ class LabelDialog(wx.Dialog):
         self.list.InsertColumn(1,'Label',width=250)
 
         for n in range(len(parent.labels)):
-            index = self.list.InsertStringItem(sys.maxint,parent.names[n])
+            index = self.list.InsertStringItem(MAX_INT,parent.names[n])
             self.list.SetStringItem(index,1,parent.labels[n])
 
         ok_btn = wx.Button(button_panel,-1,'OK')
@@ -336,7 +334,8 @@ class MyFrame(wx.Frame):
         
         self.plot()
         
-        self.sample_selector_sizer.DeleteWindows()
+        self.samples_select_panel.DestroyChildren()
+        self.sample_selector_sizer = wx.BoxSizer(wx.VERTICAL)
         self.checkboxes = []
 
         for n,d in enumerate(self.plotData.plotData):
@@ -345,8 +344,8 @@ class MyFrame(wx.Frame):
             self.sample_selector_sizer.Add(chkbox,0)
             chkbox.SetValue(True)
             chkbox.Bind(wx.EVT_CHECKBOX,self.choose_sample)
-        self.samples_select_panel.SetScrollbars(20,20,50,50)
-        self.samples_select_panel.Layout()
+        self.samples_select_panel.SetSizer(self.sample_selector_sizer)
+        self.Layout()
             
         
     def SavePlot(self,event):
