@@ -36,12 +36,12 @@ legend_positions = ['best','upper right', 'upper left', 'lower left',
 
 class EditListCtrl(wx.ListCtrl, TextEditMixin):
     def __init__(self, parent):
-        wx.ListCtrl.__init__(self,parent,-1,style=wx.LC_REPORT,size=wx.Size(500,-1))
+        wx.ListCtrl.__init__(self,parent,-1,style=wx.LC_REPORT,size=wx.Size(750,-1))
         TextEditMixin.__init__(self)
         self.Bind(wx.EVT_LIST_BEGIN_LABEL_EDIT, self.OnBeginLabelEdit)
 
     def OnBeginLabelEdit(self,event):
-        if event.m_col == 0:
+        if event.GetColumn() == 0:
             event.Veto()
         else:
             event.Skip()
@@ -97,7 +97,7 @@ class CanvasPanel(wx.Panel):
 class LabelDialog(wx.Dialog):
     def __init__(self,parent,id,title):
         wx.Dialog.__init__(self, parent, id, title,
-                           wx.DefaultPosition,size=wx.Size(600,-1))
+                           wx.DefaultPosition,size=wx.Size(800,-1))
         self.parent = parent
         vbox = wx.BoxSizer(wx.VERTICAL)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
@@ -106,12 +106,12 @@ class LabelDialog(wx.Dialog):
         button_panel = wx.Panel(self,-1)
 
         self.list = EditListCtrl(panel)
-        self.list.InsertColumn(0,'File Name',width=250)
-        self.list.InsertColumn(1,'Label',width=250)
+        self.list.InsertColumn(0,'File Name',width=300)
+        self.list.InsertColumn(1,'Label',width=300)
 
         for n in range(len(parent.labels)):
-            index = self.list.InsertStringItem(MAX_INT,parent.names[n])
-            self.list.SetStringItem(index,1,parent.labels[n])
+            index = self.list.InsertItem(MAX_INT,parent.names[n])
+            self.list.SetItem(index,1,parent.labels[n])
 
         ok_btn = wx.Button(button_panel,-1,'OK')
         cancel_btn = wx.Button(button_panel,-1,'Cancel')
@@ -134,7 +134,7 @@ class LabelDialog(wx.Dialog):
         newLabels = []
         count = self.list.GetItemCount()
         for row in range(count):
-            label = self.list.GetItem(itemId=row, col=1).GetText()
+            label = self.list.GetItem(itemIdx=row, col=1).GetText()
             newLabels.append(label)
         self.parent.labels = newLabels
 
@@ -169,7 +169,6 @@ class MyFrame(wx.Frame):
         
         filectrl_panel = wx.Panel(self, -1)
         canvas_panel = wx.Panel(self, -1)
-        sample_panel = wx.Panel(self,-1)
         right_panel = wx.Panel(self,-1)
         select_button_panel = wx.Panel(right_panel,-1)
         self.samples_select_panel = wx.ScrolledWindow(right_panel, -1)
@@ -180,8 +179,8 @@ class MyFrame(wx.Frame):
         self.canvas = CanvasPanel(canvas_panel)
         
         self.btn_load_file   = wx.Button(load_button_panel,-1,"Load File")
-        self.btn_save_plot   = wx.Button(button_panel,-1,"Save Image")
-        self.btn_save_csv    = wx.Button(button_panel,-1,"Save CSV")
+        self.btn_save_plot   = wx.Button(button_panel,-1,"Export Image")
+        self.btn_save_csv    = wx.Button(button_panel,-1,"Export CSV")
         self.legend_chk      = wx.CheckBox(button_panel,-1,"Legend")
         self.btn_edit_label  = wx.Button(button_panel,-1,"Edit Labels")
         self.legend_pos_text = wx.StaticText(button_panel,-1,"Location: ",style=wx.ALIGN_RIGHT)
